@@ -7,11 +7,11 @@ services:
     restart: always
     container_name: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mattermost
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -23,13 +23,26 @@ services:
     container_name: minio
     command: server /data
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "9000:9000" # MinIO Console
-      - "9001:9001" # MinIO Web Interface
+      - "${MINIO_PORT_CONSOLE}:${MINIO_PORT_CONSOLE}" # MinIO Console
+      - "${MINIO_PORT_WEB}:${MINIO_PORT_WEB}" # MinIO Web Interface
     volumes:
       - minio_data:/data
+    networks:
+      - mattermost-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    depends_on:
+      - mattermost
+    ports:
+      - "${NGINX_PORT}:${NGINX_PORT}"
+    volumes:
+      - ./nginx.conf:/etc/nginx.conf:ro
     networks:
       - mattermost-network
 
@@ -38,20 +51,20 @@ services:
     image: mattermost/mattermost-team-edition:latest
     container_name: mattermost
     environment:
-      MM_SQLSETTINGS_DRIVERNAME: postgres
-      MM_SQLSETTINGS_DATASOURCE: "postgres://postgres:password@postgres:5432/mattermost?sslmode=disable&connect_timeout=10"
-      MM_FILESETTINGS_DRIVERNAME: local
-      MM_FILESETTINGS_DIRECTORY: ./data
-      MM_FILESETTINGS_ENABLEPUBLICLINKS: "true"
-      MM_FILESETTINGS_PUBLICLINKSURL: "http://localhost:8065"
-      MM_FILESETTINGS_AMAZONS3ENDPOINT: http://minio:9000
-      MM_FILESETTINGS_AMAZONS3ACCESSKEYID: minioadmin
-      MM_FILESETTINGS_AMAZONS3SECRETACCESSKEY: minioadmin
-      MM_FILESETTINGS_AMAZONS3BUCKET: mattermost
-      MM_FILESETTINGS_AMAZONS3BUCKETURL: http://localhost:9000/mattermost
-      MM_FILESETTINGS_AMAZONS3REGION: us-east-1
+      MM_SQLSETTINGS_DRIVERNAME: ${MM_SQL_DRIVERNAME}
+      MM_SQLSETTINGS_DATASOURCE: ${MM_SQL_DATASOURCE}
+      MM_FILESETTINGS_DRIVERNAME: ${MM_FILE_DRIVERNAME}
+      MM_FILESETTINGS_DIRECTORY: ${MM_FILE_DIRECTORY}
+      MM_FILESETTINGS_ENABLEPUBLICLINKS: ${MM_FILE_ENABLEPUBLICLINKS}
+      MM_FILESETTINGS_PUBLICLINKSURL: ${MM_FILE_PUBLICLINKSURL}
+      MM_FILESETTINGS_AMAZONS3ENDPOINT: ${MM_FILE_S3_ENDPOINT}
+      MM_FILESETTINGS_AMAZONS3ACCESSKEYID: ${MM_FILE_S3_ACCESSKEYID}
+      MM_FILESETTINGS_AMAZONS3SECRETACCESSKEY: ${MM_FILE_S3_SECRETACCESSKEY}
+      MM_FILESETTINGS_AMAZONS3BUCKET: ${MM_FILE_S3_BUCKET}
+      MM_FILESETTINGS_AMAZONS3BUCKETURL: ${MM_FILE_S3_BUCKETURL}
+      MM_FILESETTINGS_AMAZONS3REGION: ${MM_FILE_S3_REGION}
     ports:
-      - "8065:8065"
+      - "${MATTERMOST_PORT}:${MATTERMOST_PORT}"
     depends_on:
       - postgres
       - minio
