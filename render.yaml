@@ -3,7 +3,7 @@ databases:
   plan: starter
 
 services:
-- type: pserv
+- type: web
   name: mattermost-minio
   env: docker
   dockerfilePath: ./minio/Dockerfile
