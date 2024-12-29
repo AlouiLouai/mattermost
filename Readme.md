@@ -13,11 +13,14 @@ This section outlines how to set up and run Mattermost locally using Docker and 
 - Docker: Ensure that Docker and Docker Compose are installed on your machine. You can install them from the official Docker documentation.
 ### Setup
 1. Clone the repository:
+
 bash```
 git clone <repo-url>
 cd mattermost-deployment
 ```
+
 2. Navigate to the master branch:
+
 bash```
 git checkout master
 ```
@@ -26,6 +29,7 @@ git checkout master
 - The docker-compose.yml file includes services for Mattermost, MinIO, and PostgreSQL.
 
 Run the following command to start all services:
+
 bash```
 docker-compose up --build
 ```
@@ -37,6 +41,7 @@ This will:
 - Mount the MinIO disk for file storage.
 
 4. Access Mattermost: Once everything is running, you can access Mattermost by opening your browser and navigating to:
+
 bash```
 http://localhost:8065
 ```
@@ -50,6 +55,7 @@ The production-beta branch is configured for deployment on Render, a platform-as
 
 ### Setup for Render Deployment
 1. Clone the repository and switch to the production-beta branch:
+
 bash```
 git checkout production-beta
 ```
@@ -62,6 +68,7 @@ git checkout production-beta
 3. Configure your render.yaml: The render.yaml file defines the services and environment variables for deployment on Render.
 
 Here’s an overview of the services defined:
+
 bash```
 databases:
   - name: mattermost
