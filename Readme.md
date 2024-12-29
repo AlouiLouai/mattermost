@@ -14,14 +14,14 @@ This section outlines how to set up and run Mattermost locally using Docker and 
 ### Setup
 1. Clone the repository:
 
-bash```
+```bash
 git clone <repo-url>
 cd mattermost-deployment
 ```
 
 2. Navigate to the master branch:
 
-bash```
+```bash
 git checkout master
 ```
 
@@ -30,7 +30,7 @@ git checkout master
 
 Run the following command to start all services:
 
-bash```
+```bash
 docker-compose up --build
 ```
 
@@ -42,7 +42,7 @@ This will:
 
 4. Access Mattermost: Once everything is running, you can access Mattermost by opening your browser and navigating to:
 
-bash```
+```bash
 http://localhost:8065
 ```
 
@@ -56,7 +56,7 @@ The production-beta branch is configured for deployment on Render, a platform-as
 ### Setup for Render Deployment
 1. Clone the repository and switch to the production-beta branch:
 
-bash```
+```bash
 git checkout production-beta
 ```
 
@@ -69,7 +69,7 @@ git checkout production-beta
 
 Here’s an overview of the services defined:
 
-bash```
+```bash
 databases:
   - name: mattermost
     plan: starter
