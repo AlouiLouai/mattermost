@@ -1,116 +1,73 @@
+databases:
+- name: mattermost
+  plan: starter
+
 services:
-  - name: postgres
-    type: private
-    env: docker
-    docker:
-      image: postgres:14
-      command: []
-    envVars:
-      - key: POSTGRES_USER
-        value: your-postgres-user
-      - key: POSTGRES_PASSWORD
-        value: your-postgres-password
-      - key: POSTGRES_DB
-        value: your-postgres-db
-    mounts:
-      - type: volume
-        name: postgres_data
-        path: /var/lib/postgresql/data
-    healthCheck:
-      type: tcp
-      port: 5432
+- type: pserv
+  name: mattermost-minio
+  env: docker
+  dockerfilePath: ./minio/Dockerfile
+  dockerContext: ./minio
+  autoDeploy: false
+  disk:
+    name: data
+    mountPath: /data
+  envVars:
+  - key: MINIO_ACCESS_KEY
+    generateValue: true
+  - key: MINIO_SECRET_KEY
+    generateValue: true
 
-  - name: minio
-    type: private
-    env: docker
-    docker:
-      image: minio/minio
-      command: ["server", "/data"]
-    envVars:
-      - key: MINIO_ROOT_USER
-        value: your-minio-root-user
-      - key: MINIO_ROOT_PASSWORD
-        value: your-minio-root-password
-    mounts:
-      - type: volume
-        name: minio_data
-        path: /data
-    healthCheck:
-      type: tcp
-      port: 9000
-
-  - name: nginx
-    type: web
-    env: docker
-    docker:
-      image: nginx:latest
-      command: []
-    envVars: []
-    mounts:
-      - type: path
-        name: nginx_conf
-        path: /etc/nginx.conf
-    healthCheck:
-      type: tcp
-      port: 80
-    routes:
-      - type: rewrite
-        source: /
-        destination: http://mattermost:8065
-
-  - name: mattermost
-    type: private
-    env: docker
-    docker:
-      image: mattermost/mattermost-team-edition:latest
-      command: []
-    envVars:
-      - key: MM_SQLSETTINGS_DRIVERNAME
-        value: postgres
-      - key: MM_SQLSETTINGS_DATASOURCE
-        value: postgres://your-postgres-user:your-postgres-password@postgres:5432/your-postgres-db?sslmode=disable&connect_timeout=10
-      - key: MM_FILESETTINGS_DRIVERNAME
-        value: local
-      - key: MM_FILESETTINGS_DIRECTORY
-        value: ./data
-      - key: MM_FILESETTINGS_ENABLEPUBLICLINKS
-        value: "true"
-      - key: MM_FILESETTINGS_PUBLICLINKSURL
-        value: http://localhost:8065
-      - key: MM_FILESETTINGS_AMAZONS3ENDPOINT
-        value: http://minio:9000
-      - key: MM_FILESETTINGS_AMAZONS3ACCESSKEYID
-        value: your-minio-root-user
-      - key: MM_FILESETTINGS_AMAZONS3SECRETACCESSKEY
-        value: your-minio-root-password
-      - key: MM_FILESETTINGS_AMAZONS3BUCKET
-        value: mattermost
-      - key: MM_FILESETTINGS_AMAZONS3BUCKETURL
-        value: http://localhost:9000/mattermost
-      - key: MM_FILESETTINGS_AMAZONS3REGION
-        value: us-east-1
-    mounts:
-      - type: volume
-        name: mattermost_data
-        path: /mattermost/data
-      - type: volume
-        name: mattermost_logs
-        path: /mattermost/logs
-      - type: volume
-        name: mattermost_plugins
-        path: /mattermost/plugins
-      - type: volume
-        name: mattermost_client_plugins
-        path: /mattermost/client-plugins
-
-volumes:
-  - name: postgres_data
-  - name: minio_data
-  - name: mattermost_data
-  - name: mattermost_logs
-  - name: mattermost_plugins
-  - name: mattermost_client_plugins
-
-paths:
-  - name: nginx_conf
-    path: ./nginx.conf
+- type: web
+  name: mattermost
+  env: docker
+  plan: starter
+  dockerfilePath: ./app/Dockerfile
+  dockerContext: ./app
+  autoDeploy: false
+  disk:
+    name: config
+    mountPath: /mattermost/config
+    sizeGB: 1
+  envVars:
+  - key: MM_USERNAME
+    fromDatabase:
+      name: mattermost
+      property: user
+  - key: MM_PASSWORD
+    fromDatabase:
+      name: mattermost
+      property: password
+  - key: MM_DBNAME
+    fromDatabase:
+      name: mattermost
+      property: database
+  - key: MM_SQLSETTINGS_DRIVERNAME
+    value: postgres
+  - key: DB_HOST
+    fromDatabase:
+      name: mattermost
+      property: host
+  - key: MM_SERVICESETTINGS_LISTENADDRESS
+    value: ":10000"
+  - key: MM_FILESETTINGS_DRIVERNAME
+    value: amazons3
+  - key: MM_FILESETTINGS_AMAZONS3BUCKET
+    value: mattermost
+  - key: MM_FILESETTINGS_AMAZONS3ACCESSKEYID
+    fromService:
+      type: pserv
+      name: mattermost-minio
+      envVarKey: MINIO_ACCESS_KEY
+  - key: MM_FILESETTINGS_AMAZONS3SECRETACCESSKEY
+    fromService:
+      type: pserv
+      name: mattermost-minio
+      envVarKey: MINIO_SECRET_KEY
+  - key: MM_FILESETTINGS_AMAZONS3ENDPOINT
+    fromService:
+      type: pserv
+      name: mattermost-minio
+      property: hostport
+  - key: MM_FILESETTINGS_AMAZONS3SSL
+    value: "false"

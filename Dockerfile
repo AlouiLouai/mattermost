@@ -1,2 +1,0 @@
-# Dockerfile
-FROM alpine:latest
