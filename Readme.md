@@ -148,6 +148,7 @@ services:
 4. Deploy the Services:
 - Push your changes to the production-beta branch.
 - Log into the Render dashboard and link your repository.
+- IMPORTANT: Create a PRIVATE SERVICE FOR MINIO first. This ensure that the storage service is not publicly accessible and is secured for Mattermost to use. Afterfward, create the WEB SERVICE FOR MATTERMOST.
 - Render will automatically detect the services and begin deployment.
 - Make sure to configure the environment variables and disk settings via Render's interface.
 
